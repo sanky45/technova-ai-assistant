@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="KStore AI — Intelligent document assistant"
+    >
+
+    <meta
+        name="theme-color"
+        content="#090a0f"
+    >
+
+    <title>KStore AI — Assistant</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body class="app-page">
+
+
+<div class="app-shell">
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside
+        id="sidebar"
+        class="sidebar"
+        aria-label="Application sidebar"
+    >
+
+
+        <!-- =================================================
+             SIDEBAR HEADER
+        ================================================== -->
+
+        <div class="sidebar-top">
+
+
+            <a
+                href="/"
+                class="brand"
+                aria-label="KStore AI home"
+            >
+
+                <span
+                    class="brand-mark"
+                    aria-hidden="true"
+                >
+                    K
+                </span>
+
+                <span class="brand-text">
+                    KStore
+                    <strong>AI</strong>
+                </span>
+
+            </a>
+
+
+            <button
+                id="closeSidebar"
+                class="icon-button mobile-only"
+                type="button"
+                aria-label="Close sidebar"
+            >
+                ×
+            </button>
+
+
+        </div>
+
+
+        <!-- =================================================
+             NEW CHAT
+        ================================================== -->
+
+        <div class="sidebar-new-chat">
+
+            <button
+                id="newChatBtn"
+                class="new-chat-btn"
+                type="button"
+            >
+
+                <span
+                    class="new-chat-icon"
+                    aria-hidden="true"
+                >
+                    +
+                </span>
+
+                <span>
+                    New chat
+                </span>
+
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             CONVERSATIONS
+        ================================================== -->
+
+        <section
+            class="sidebar-section"
+            aria-label="Conversations"
+        >
+
+
+            <div class="sidebar-section-header">
+
+                <span class="sidebar-label">
+                    Conversations
+                </span>
+
+            </div>
+
+
+            <div
+                id="conversationList"
+                class="conversation-list"
+            >
+            </div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             SIDEBAR FOOTER
+        ================================================== -->
+
+        <div class="sidebar-bottom">
+
+
+            <!-- Theme -->
+
+            <button
+                id="themeBtn"
+                class="sidebar-action"
+                type="button"
+            >
+
+                <span
+                    class="sidebar-action-icon"
+                    aria-hidden="true"
+                >
+                    ◐
+                </span>
+
+                <span id="themeLabel">
+                    Light mode
+                </span>
+
+            </button>
+
+
+            <!-- Sign out -->
+
+            <button
+                id="logoutBtn"
+                class="sidebar-action"
+                type="button"
+            >
+
+                <span
+                    class="sidebar-action-icon"
+                    aria-hidden="true"
+                >
+                    ⇥
+                </span>
+
+                <span>
+                    Sign out
+                </span>
+
+            </button>
+
+
+            <!-- Application information -->
+
+            <div class="sidebar-footer-meta">
+
+                <span>
+                    KStore AI
+                </span>
+
+                <span>
+                    Document Intelligence
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+    </aside>
+
+
+    <!-- =====================================================
+         MOBILE SIDEBAR OVERLAY
+    ====================================================== -->
+
+    <div
+        id="sidebarOverlay"
+        class="sidebar-overlay"
+        aria-hidden="true"
+    >
+    </div>
+
+
+    <!-- =====================================================
+         MAIN APPLICATION
+    ====================================================== -->
+
+    <main class="chat-main">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <header class="chat-header">
+
+
+            <!-- Mobile menu -->
+
+            <button
+                id="openSidebar"
+                class="icon-button mobile-only"
+                type="button"
+                aria-label="Open sidebar"
+            >
+                ☰
+            </button>
+
+
+            <!-- Chat identity -->
+
+            <div class="chat-title">
+
+
+                <div
+                    class="chat-status"
+                    aria-hidden="true"
+                >
+
+                    <span class="status-dot"></span>
+
+                </div>
+
+
+                <div class="chat-title-text">
+
+                    <strong>
+                        KStore AI
+                    </strong>
+
+                    <span>
+                        Document Assistant
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- Header actions -->
+
+            <div class="header-actions">
+
+
+                <button
+                    id="clearChatBtn"
+                    class="header-action"
+                    type="button"
+                    title="Clear current conversation"
+                >
+
+                    <span
+                        class="header-action-icon"
+                        aria-hidden="true"
+                    >
+                        ⌫
+                    </span>
+
+                    <span>
+                        Clear
+                    </span>
+
+                </button>
+
+
+            </div>
+
+
+        </header>
+
+
+        <!-- =================================================
+             CHAT CONTENT
+        ================================================== -->
+
+        <section
+            id="chatMessages"
+            class="chat-messages"
+            aria-live="polite"
+            aria-label="Conversation"
+        >
+
+
+            <!-- =================================================
+                 WELCOME STATE
+            ================================================== -->
+
+            <div
+                id="welcomeState"
+                class="welcome-state"
+            >
+
+
+                <div class="welcome-mark">
+
+                    <span aria-hidden="true">
+                        ✦
+                    </span>
+
+                </div>
+
+
+                <div class="welcome-eyebrow">
+                    KSTORE AI
+                </div>
+
+
+                <h1>
+                    How can I help you?
+                </h1>
+
+
+                <p>
+                    Ask questions about your organization's
+                    documents and get answers grounded in
+                    your knowledge base.
+                </p>
+
+
+                <!-- Suggested questions -->
+
+                <div class="suggestion-grid">
+
+
+                    <button
+                        class="suggestion"
+                        type="button"
+                        data-question="How many casual leaves does TechNova provide?"
+                    >
+
+                        <span
+                            class="suggestion-icon"
+                            aria-hidden="true"
+                        >
+                            ▤
+                        </span>
+
+                        <span class="suggestion-content">
+
+                            <strong>
+                                Leave policy
+                            </strong>
+
+                            <small>
+                                How many casual leaves does TechNova provide?
+                            </small>
+
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="suggestion"
+                        type="button"
+                        data-question="What is the VPN access process?"
+                    >
+
+                        <span
+                            class="suggestion-icon"
+                            aria-hidden="true"
+                        >
+                            ⌁
+                        </span>
+
+                        <span class="suggestion-content">
+
+                            <strong>
+                                IT &amp; access
+                            </strong>
+
+                            <small>
+                                What is the VPN access process?
+                            </small>
+
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="suggestion"
+                        type="button"
+                        data-question="What are the main components of the project architecture?"
+                    >
+
+                        <span
+                            class="suggestion-icon"
+                            aria-hidden="true"
+                        >
+                            ◈
+                        </span>
+
+                        <span class="suggestion-content">
+
+                            <strong>
+                                Architecture
+                            </strong>
+
+                            <small>
+                                What are the main components of the project architecture?
+                            </small>
+
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="suggestion"
+                        type="button"
+                        data-question="How many sick leaves are allowed?"
+                    >
+
+                        <span
+                            class="suggestion-icon"
+                            aria-hidden="true"
+                        >
+                            ✓
+                        </span>
+
+                        <span class="suggestion-content">
+
+                            <strong>
+                                Sick leave
+                            </strong>
+
+                            <small>
+                                How many sick leaves are allowed?
+                            </small>
+
+                        </span>
+
+                    </button>
+
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+        <!-- =================================================
+             MESSAGE COMPOSER
+        ================================================== -->
+
+        <div class="composer-wrap">
+
+
+            <form
+                id="chatForm"
+                class="composer"
+            >
+
+
+                <div class="composer-input-wrap">
+
+                    <textarea
+                        id="questionInput"
+                        name="question"
+                        rows="1"
+                        maxlength="4000"
+                        placeholder="Ask anything about your documents..."
+                        aria-label="Question"
+                        autocomplete="off"
+                    ></textarea>
+
+                </div>
+
+
+                <button
+                    id="sendBtn"
+                    class="send-btn"
+                    type="submit"
+                    aria-label="Send message"
+                    title="Send message"
+                >
+
+                    <span aria-hidden="true">
+                        ↑
+                    </span>
+
+                </button>
+
+
+            </form>
+
+
+            <div class="composer-footer">
+
+
+                <span class="composer-hint">
+                    Enter to send
+                </span>
+
+
+                <span
+                    class="composer-separator"
+                    aria-hidden="true"
+                >
+                    ·
+                </span>
+
+
+                <span class="composer-hint">
+                    Shift + Enter for a new line
+                </span>
+
+
+                <span class="composer-security">
+                    Your questions are protected
+                </span>
+
+
+            </div>
+
+
+        </div>
+
+
+    </main>
+
+
+</div>
+
+
+<script src="script.js"></script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,110 @@
+TECHNOVA COMPANY OVERVIEW
+
+Company Name: TechNova Solutions Pvt. Ltd.
+
+Founded: 2018
+
+Head Office: Bangalore, India
+
+Industry: Information Technology and Digital Transformation
+
+Employees: Approximately 1,500
+
+About TechNova
+
+TechNova Solutions is a leading IT services company specializing in
+cloud computing, enterprise software development, artificial
+intelligence, DevOps, cybersecurity, and digital transformation
+services. The company serves clients across healthcare, banking,
+manufacturing, retail, and telecommunications sectors.
+
+Mission
+
+To simplify business operations through innovative technology solutions
+while maintaining the highest standards of quality and security.
+
+Vision
+
+To become one of the most trusted technology partners for enterprises
+worldwide.
+
+Core Services
+
+-   Cloud Migration
+-   Azure Administration
+-   AWS Solutions
+-   DevOps Automation
+-   Software Development
+-   Cybersecurity
+-   Artificial Intelligence
+-   Machine Learning
+-   Data Analytics
+-   Technical Consulting
+
+Technology Stack
+
+Backend
+
+-   Python
+-   .NET
+-   Java
+-   Node.js
+
+Frontend
+
+-   Angular
+-   React
+-   HTML
+-   CSS
+-   JavaScript
+
+Database
+
+-   SQL Server
+-   PostgreSQL
+-   MongoDB
+
+Cloud Platforms
+
+-   Microsoft Azure
+-   Amazon Web Services (AWS)
+-   Google Cloud Platform (GCP)
+
+Security Standards
+
+-   TechNova follows ISO 27001 security guidelines.
+-   All employees must use Multi-Factor Authentication (MFA).
+-   Passwords must be changed every 90 days.
+-   VPN is mandatory while accessing internal applications.
+
+Business Hours
+
+Monday to Friday
+09:00 AM to 06:00 PM
+
+Support Team
+
+The IT Support team provides assistance for:
+
+-   Password Reset
+-   VPN Issues
+-   Outlook Issues
+-   Laptop Configuration
+-   Azure Access
+-   Software Installation
+
+Employee Benefits
+
+-   Medical Insurance
+-   Paid Annual Leave
+-   Flexible Working Hours
+-   Learning Budget
+-   Certification Reimbursement
+
+This is a test modification for ingestion detection.
+
+Conclusion
+
+TechNova continues to invest heavily in cloud technologies, AI-powered
+solutions, automation, and enterprise security to support its growing
+customer base across multiple countries.

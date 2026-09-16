@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Sign in to KStore AI Document Intelligence"
+    >
+
+    <meta
+        name="theme-color"
+        content="#090a0f"
+    >
+
+    <title>Sign in — KStore AI</title>
+
+    <link
+        rel="stylesheet"
+        href="login.css"
+    >
+</head>
+
+
+<body class="auth-page">
+
+    <main class="auth-shell">
+
+        <!-- Decorative background -->
+        <div class="auth-glow auth-glow-one"></div>
+        <div class="auth-glow auth-glow-two"></div>
+
+
+        <section class="auth-layout">
+
+
+            <!-- =================================================
+                 BRAND / PRODUCT PANEL
+            ================================================== -->
+
+            <aside class="auth-brand-panel">
+
+                <div class="brand-lockup">
+
+                    <div class="brand-mark" aria-hidden="true">
+                        K
+                    </div>
+
+                    <div>
+                        <div class="brand-name">
+                            KStore <strong>AI</strong>
+                        </div>
+
+                        <div class="brand-subtitle">
+                            Document Intelligence
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="brand-content">
+
+                    <div class="brand-badge">
+                        AI-powered knowledge assistant
+                    </div>
+
+                    <h1>
+                        Your organization's
+                        knowledge, made
+                        <span>accessible.</span>
+                    </h1>
+
+                    <p>
+                        Ask questions about your company documents
+                        and get clear, grounded answers from your
+                        knowledge base.
+                    </p>
+
+
+                    <div class="feature-list">
+
+                        <div class="feature-item">
+
+                            <span class="feature-icon" aria-hidden="true">
+                                ✓
+                            </span>
+
+                            <div>
+                                <strong>Grounded answers</strong>
+                                <span>Responses based on your documents</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="feature-item">
+
+                            <span class="feature-icon" aria-hidden="true">
+                                ◈
+                            </span>
+
+                            <div>
+                                <strong>Source-aware</strong>
+                                <span>See the documents behind each answer</span>
+                            </div>
+
+                        </div>
+
+
+                        <div class="feature-item">
+
+                            <span class="feature-icon" aria-hidden="true">
+                                ◌
+                            </span>
+
+                            <div>
+                                <strong>Secure access</strong>
+                                <span>Protected with authenticated access</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="brand-footer">
+                    KStore AI · Enterprise Document Intelligence
+                </div>
+
+            </aside>
+
+
+            <!-- =================================================
+                 LOGIN PANEL
+            ================================================== -->
+
+            <section class="auth-card-wrap">
+
+                <div class="auth-card">
+
+
+                    <div class="mobile-brand">
+
+                        <div class="brand-mark" aria-hidden="true">
+                            K
+                        </div>
+
+                        <div>
+                            <div class="brand-name">
+                                KStore <strong>AI</strong>
+                            </div>
+
+                            <div class="brand-subtitle">
+                                Document Intelligence
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="auth-heading">
+
+                        <div class="eyebrow">
+                            Welcome back
+                        </div>
+
+                        <h2>
+                            Sign in to KStore AI
+                        </h2>
+
+                        <p>
+                            Enter your credentials to continue
+                            to your document assistant.
+                        </p>
+
+                    </div>
+
+
+                    <!-- Server / client error -->
+                    <div
+                        id="loginError"
+                        class="form-alert form-alert-error"
+                        role="alert"
+                        aria-live="polite"
+                        hidden
+                    ></div>
+
+
+                    <!-- Success -->
+                    <div
+                        id="loginSuccess"
+                        class="form-alert form-alert-success"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                    ></div>
+
+
+                    <form
+                        id="loginForm"
+                        class="auth-form"
+                        novalidate
+                    >
+
+
+                        <!-- Email -->
+
+                        <div class="field-group">
+
+                            <label
+                                for="email"
+                            >
+                                Email address
+                            </label>
+
+                            <div class="input-wrap">
+
+                                <span
+                                    class="input-icon"
+                                    aria-hidden="true"
+                                >
+                                    @
+                                </span>
+
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    autocomplete="email"
+                                    inputmode="email"
+                                    placeholder="you@company.com"
+                                    maxlength="255"
+                                    required
+                                >
+
+                            </div>
+
+                            <span
+                                id="emailError"
+                                class="field-error"
+                                aria-live="polite"
+                            ></span>
+
+                        </div>
+
+
+                        <!-- Password -->
+
+                        <div class="field-group">
+
+                            <div class="field-label-row">
+
+                                <label
+                                    for="password"
+                                >
+                                    Password
+                                </label>
+
+                                <button
+                                    id="forgotPasswordBtn"
+                                    class="text-button"
+                                    type="button"
+                                >
+                                    Forgot password?
+                                </button>
+
+                            </div>
+
+
+                            <div class="input-wrap">
+
+                                <span
+                                    class="input-icon"
+                                    aria-hidden="true"
+                                >
+                                    •
+                                </span>
+
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    autocomplete="current-password"
+                                    placeholder="Enter your password"
+                                    maxlength="128"
+                                    required
+                                >
+
+                                <button
+                                    id="togglePassword"
+                                    class="password-toggle"
+                                    type="button"
+                                    aria-label="Show password"
+                                    title="Show password"
+                                >
+                                    Show
+                                </button>
+
+                            </div>
+
+                            <span
+                                id="passwordError"
+                                class="field-error"
+                                aria-live="polite"
+                            ></span>
+
+                        </div>
+
+
+                        <!-- Options -->
+
+                        <div class="form-options">
+
+                            <label class="checkbox-label">
+
+                                <input
+                                    id="rememberMe"
+                                    name="rememberMe"
+                                    type="checkbox"
+                                >
+
+                                <span class="custom-checkbox">
+                                    <span>✓</span>
+                                </span>
+
+                                <span>
+                                    Remember me
+                                </span>
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- Submit -->
+
+                        <button
+                            id="loginBtn"
+                            class="primary-button"
+                            type="submit"
+                        >
+
+                            <span
+                                id="loginBtnText"
+                            >
+                                Sign in
+                            </span>
+
+                            <span
+                                id="loginSpinner"
+                                class="button-spinner"
+                                aria-hidden="true"
+                                hidden
+                            ></span>
+
+                            <span
+                                class="button-arrow"
+                                aria-hidden="true"
+                            >
+                                →
+                            </span>
+
+                        </button>
+
+
+                    </form>
+
+
+                    <div class="auth-divider">
+                        <span>Protected workspace</span>
+                    </div>
+
+
+                    <div class="security-note">
+
+                        <span
+                            class="security-icon"
+                            aria-hidden="true"
+                        >
+                            ◈
+                        </span>
+
+                        <span>
+                            Your account and document access are
+                            protected by authenticated sessions.
+                        </span>
+
+                    </div>
+
+
+                    <div class="auth-bottom">
+
+                        <span>
+                            Don't have an account?
+                        </span>
+
+                        <a href="/register.html">
+                            Create an account
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
+
+    </main>
+
+
+    <script src="login.js"></script>
+
+</body>
+
+</html>
