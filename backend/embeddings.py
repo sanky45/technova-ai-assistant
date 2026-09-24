@@ -1,62 +1,47 @@
-from sentence_transformers import SentenceTransformer
+import os
+
+import numpy as np
+from huggingface_hub import InferenceClient
+
+from config import EMBEDDING_DIMENSION
 
 
-EMBEDDING_MODEL_NAME = (
-    "BAAI/bge-small-en-v1.5"
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+if not HF_TOKEN:
+    raise ValueError("HF_TOKEN is not configured.")
+
+EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
+
+client = InferenceClient(
+    provider="hf-inference",
+    api_key=HF_TOKEN
 )
 
-EMBEDDING_DIMENSION = 384
 
-
-embedding_model = SentenceTransformer(
-    EMBEDDING_MODEL_NAME
-)
-
-
-def create_embedding(
-    text: str
-) -> list[float]:
-    """
-    Convert a single text string into
-    a normalized embedding vector.
-    """
-
+def create_embedding(text: str) -> list[float]:
     if not text or not text.strip():
+        raise ValueError("Text cannot be empty.")
+
+    result = client.feature_extraction(
+        text.strip(),
+        model=EMBEDDING_MODEL
+    )
+
+    embedding = np.asarray(result)
+
+    # HF may return token-level embeddings.
+    # Convert them to a single sentence embedding if necessary.
+    if embedding.ndim == 2:
+        embedding = embedding.mean(axis=0)
+
+    embedding = embedding.tolist()
+
+    if len(embedding) != EMBEDDING_DIMENSION:
         raise ValueError(
-            "Cannot create embedding for empty text."
+            f"Invalid embedding dimension. "
+            f"Expected {EMBEDDING_DIMENSION}, "
+            f"got {len(embedding)}."
         )
 
-    embedding = embedding_model.encode(
-        text,
-        normalize_embeddings=True
-    )
-
-    return embedding.tolist()
-
-
-def create_embeddings(
-    texts: list[str]
-) -> list[list[float]]:
-    """
-    Convert multiple text strings into
-    normalized embedding vectors.
-    """
-
-    if not texts:
-        return []
-
-    cleaned_texts = [
-        text.strip()
-        for text in texts
-        if text and text.strip()
-    ]
-
-    if not cleaned_texts:
-        return []
-
-    embeddings = embedding_model.encode(
-        cleaned_texts,
-        normalize_embeddings=True
-    )
-
-    return embeddings.tolist()
+    return embedding

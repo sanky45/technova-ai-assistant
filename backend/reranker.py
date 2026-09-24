@@ -1,22 +1,37 @@
-from sentence_transformers import CrossEncoder
+import os
+
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # --------------------------------------------------
-# Reranker configuration
+# OpenRouter configuration
 # --------------------------------------------------
 
-RERANKER_MODEL_NAME = (
-    "cross-encoder/ms-marco-MiniLM-L6-v2"
+OPENROUTER_API_URL = (
+    "https://openrouter.ai/api/v1/rerank"
+)
+
+OPENROUTER_API_KEY = os.getenv(
+    "OPENROUTER_API_KEY"
+)
+
+RERANKER_MODEL_NAME = os.getenv(
+    "OPENROUTER_RERANK_MODEL",
+    "cohere/rerank-v3.5"
 )
 
 
 # --------------------------------------------------
-# Load reranker model
+# Configuration validation
 # --------------------------------------------------
 
-reranker_model = CrossEncoder(
-    RERANKER_MODEL_NAME
-)
+if not OPENROUTER_API_KEY:
+    raise ValueError(
+        "OPENROUTER_API_KEY is not configured."
+    )
 
 
 # --------------------------------------------------
@@ -30,13 +45,13 @@ def rerank_documents(
 ):
     """
     Re-rank documents retrieved from Pinecone
-    using a Cross-Encoder.
+    using the OpenRouter Rerank API.
 
     Pipeline:
 
         Pinecone candidates
               ↓
-        Cross-Encoder
+        OpenRouter Reranker
               ↓
         Ranked documents
               ↓
@@ -69,7 +84,6 @@ def rerank_documents(
     # --------------------------------------------------
 
     if not query or not query.strip():
-
         raise ValueError(
             "Query cannot be empty."
         )
@@ -79,7 +93,6 @@ def rerank_documents(
     # --------------------------------------------------
 
     if top_k <= 0:
-
         raise ValueError(
             "top_k must be greater than zero."
         )
@@ -89,15 +102,13 @@ def rerank_documents(
     # --------------------------------------------------
 
     if not documents:
-
         return []
 
     # --------------------------------------------------
-    # Create query-document pairs
+    # Create document list
     # --------------------------------------------------
 
-    pairs = []
-
+    rerank_documents_list = []
     valid_documents = []
 
     for document in documents:
@@ -117,14 +128,10 @@ def rerank_documents(
         # ----------------------------------------------
 
         if not content or not content.strip():
-
             continue
 
-        pairs.append(
-            (
-                query,
-                content
-            )
+        rerank_documents_list.append(
+            content
         )
 
         valid_documents.append(
@@ -135,16 +142,54 @@ def rerank_documents(
     # No valid documents
     # --------------------------------------------------
 
-    if not pairs:
-
+    if not rerank_documents_list:
         return []
 
     # --------------------------------------------------
-    # Generate Cross-Encoder scores
+    # OpenRouter request
     # --------------------------------------------------
 
-    scores = reranker_model.predict(
-        pairs
+    response = requests.post(
+        OPENROUTER_API_URL,
+        headers={
+            "Authorization": (
+                f"Bearer {OPENROUTER_API_KEY}"
+            ),
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": RERANKER_MODEL_NAME,
+            "query": query.strip(),
+            "documents": rerank_documents_list,
+            "top_n": min(
+                top_k,
+                len(rerank_documents_list)
+            ),
+        },
+        timeout=60,
+    )
+
+    # --------------------------------------------------
+    # Handle API errors
+    # --------------------------------------------------
+
+    if response.status_code != 200:
+
+        raise RuntimeError(
+            "OpenRouter reranking failed. "
+            f"Status: {response.status_code}. "
+            f"Response: {response.text}"
+        )
+
+    # --------------------------------------------------
+    # Parse response
+    # --------------------------------------------------
+
+    result = response.json()
+
+    results = result.get(
+        "results",
+        []
     )
 
     # --------------------------------------------------
@@ -153,10 +198,19 @@ def rerank_documents(
 
     ranked_documents = []
 
-    for document, score in zip(
-        valid_documents,
-        scores
-    ):
+    for result_item in results:
+
+        index = result_item.get(
+            "index"
+        )
+
+        if index is None:
+            continue
+
+        if index >= len(valid_documents):
+            continue
+
+        document = valid_documents[index]
 
         metadata = document.get(
             "metadata",
@@ -185,11 +239,14 @@ def rerank_documents(
             ),
 
             # ------------------------------------------
-            # Cross-Encoder relevance score
+            # OpenRouter reranker score
             # ------------------------------------------
 
             "rerank_score": float(
-                score
+                result_item.get(
+                    "relevance_score",
+                    0.0
+                )
             ),
 
             # ------------------------------------------
@@ -203,20 +260,4 @@ def rerank_documents(
             ranked_document
         )
 
-    # --------------------------------------------------
-    # Sort by Cross-Encoder score
-    # --------------------------------------------------
-
-    ranked_documents.sort(
-        key=lambda document:
-            document["rerank_score"],
-        reverse=True
-    )
-
-    # --------------------------------------------------
-    # Return Top-K documents
-    # --------------------------------------------------
-
-    return ranked_documents[
-        :top_k
-    ]
+    return ranked_documents
