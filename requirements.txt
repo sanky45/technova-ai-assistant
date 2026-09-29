@@ -87,5 +87,4 @@ zstandard==0.25.0
 google-genai==2.19.0
 pinecone==9.1.0
 redis==8.1.0
-sentence-transformers==5.7.0
-torch==2.13.0
+
