@@ -12,7 +12,7 @@
 
     <meta
         name="description"
-        content="KStore AI — Intelligent document assistant"
+        content="TechNova AI — Intelligent document assistant"
     >
 
     <meta
@@ -20,7 +20,7 @@
         content="#090a0f"
     >
 
-    <title>KStore AI — Assistant</title>
+    <title>TechNova AI — Assistant</title>
 
     <link
         rel="stylesheet"
@@ -57,7 +57,7 @@
             <a
                 href="/"
                 class="brand"
-                aria-label="KStore AI home"
+                aria-label="TechNova AI home"
             >
 
                 <span
@@ -68,7 +68,7 @@
                 </span>
 
                 <span class="brand-text">
-                    KStore
+                    TechNova
                     <strong>AI</strong>
                 </span>
 
@@ -146,6 +146,35 @@
 
 
         <!-- =================================================
+             KNOWLEDGE BASE DOCUMENTS
+        ================================================== -->
+
+        <section class="documents-section" aria-label="Knowledge base">
+            <div class="documents-section-header">
+                <div class="knowledge-base-heading">
+                    <span class="sidebar-label">Knowledge base</span>
+                    <span class="knowledge-base-caption">Company knowledge, managed centrally</span>
+                </div>
+                <button id="addDocumentBtn" class="add-document-btn" type="button">
+                    <span aria-hidden="true">＋</span> Add documents
+                </button>
+            </div>
+            <input
+                id="documentFileInput"
+                type="file"
+                accept=".pdf,.docx,.pptx,.txt,.png,.jpg,.jpeg"
+                multiple
+                hidden
+            >
+            <div class="knowledge-base-note">
+                <span class="knowledge-base-indicator" aria-hidden="true"></span>
+                <span>Documents are stored securely in the knowledge repository.</span>
+            </div>
+            <div id="documentUploadStatus" class="document-upload-status" role="status" aria-live="polite" hidden></div>
+        </section>
+
+
+        <!-- =================================================
              SIDEBAR FOOTER
         ================================================== -->
 
@@ -201,7 +230,7 @@
             <div class="sidebar-footer-meta">
 
                 <span>
-                    KStore AI
+                    TechNova AI
                 </span>
 
                 <span>
@@ -273,7 +302,7 @@
                 <div class="chat-title-text">
 
                     <strong>
-                        KStore AI
+                        TechNova AI
                     </strong>
 
                     <span>

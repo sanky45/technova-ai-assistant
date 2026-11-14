@@ -5,328 +5,297 @@ from zipfile import ZipFile
 from langchain_community.document_loaders import (
     PyPDFLoader,
     Docx2txtLoader,
-    TextLoader
+    TextLoader,
 )
 
 from pptx import Presentation
-from PIL import Image
+from pptx.enum.shapes import MSO_SHAPE_TYPE
+from PIL import Image, UnidentifiedImageError
 from pypdf import PdfReader
 
 from ocr import perform_ocr
 
 
-# Folder containing all documents
-DOCUMENT_FOLDER = Path("../documents/TechNova/")
+# Resolve the document folder relative to this file.
+# Expected structure:
+# backend/
+#   document_loader.py
+#   documents/
+#     TechNova/
+#       PDF_Policies_and_Manuals/
+#       DOCX_Operational_Standards/
+#       PPTX_Company_and_Technology/
+DOCUMENT_FOLDER = (
+    Path(__file__).resolve().parent
+    / "documents"
+    / "TechNova"
+)
+
+SUPPORTED_EXTENSIONS = {
+    ".pdf",
+    ".docx",
+    ".pptx",
+    ".txt",
+    ".png",
+    ".jpg",
+    ".jpeg",
+}
 
 
-def load_txt(file_path):
-    """
-    Load a TXT file using LangChain.
-    """
+def _base_metadata(file_path: Path) -> dict:
+    """Build consistent source metadata for a loaded file."""
+    return {
+        "file_name": file_path.name,
+        "file_type": file_path.suffix.lower(),
+        "source": str(file_path.resolve()),
+    }
 
-    loader = TextLoader(
-        str(file_path),
-        encoding="utf-8"
-    )
 
+def _ocr_image_bytes(image_data: bytes) -> str:
+    """Run OCR against image bytes and return extracted text."""
+    with Image.open(BytesIO(image_data)) as image:
+        return perform_ocr(image) or ""
+
+
+def load_txt(file_path: Path) -> list:
+    """Load a UTF-8 text file."""
+    loader = TextLoader(str(file_path), encoding="utf-8")
     documents = loader.load()
+
+    if not documents:
+        return []
+
+    content = documents[0].page_content.strip()
+    if not content:
+        return []
 
     return [
         {
-            "content": documents[0].page_content,
-            "metadata": {
-                "file_name": file_path.name,
-                "file_type": file_path.suffix,
-                "source": str(file_path)
-            }
+            "content": content,
+            "metadata": _base_metadata(file_path),
         }
     ]
 
 
-def load_pdf(file_path):
-    """
-    Load PDF text and OCR embedded images.
-
-    Normal PDF text is extracted using PyPDFLoader.
-    Images embedded inside PDF pages are sent to OCR.
-    """
-
-    # Extract normal PDF text
+def load_pdf(file_path: Path) -> list:
+    """Extract native PDF text and OCR images embedded on each page."""
     loader = PyPDFLoader(str(file_path))
-
     documents = loader.load()
-
-    # Open PDF to access embedded images
     reader = PdfReader(str(file_path))
 
     pdf_documents = []
 
-    for page_number, document in enumerate(
-        documents,
-        start=1
-    ):
+    for page_number, document in enumerate(documents, start=1):
+        text_parts = []
+        native_text = (document.page_content or "").strip()
+        if native_text:
+            text_parts.append(native_text)
 
-        # Native PDF text
-        text = document.page_content.strip()
-
-        # Get corresponding PDF page
         pdf_page = reader.pages[page_number - 1]
 
-        ocr_texts = []
-
-        # Check for embedded images
-        for image in pdf_page.images:
-
-            try:
-
-                image_data = image.data
-
-                pil_image = Image.open(
-                    BytesIO(image_data)
-                )
-
-                # OCR the embedded image
-                image_text = perform_ocr(
-                    pil_image
-                )
-
-                if image_text:
-                    ocr_texts.append(
-                        image_text
+        try:
+            for embedded_image in pdf_page.images:
+                try:
+                    image_text = _ocr_image_bytes(embedded_image.data).strip()
+                    if image_text:
+                        text_parts.append(image_text)
+                except Exception as error:
+                    print(
+                        f"OCR failed for image on page {page_number} "
+                        f"of {file_path.name}: {error}"
                     )
-
-            except Exception as e:
-
-                print(
-                    f"OCR failed for image "
-                    f"on page {page_number}: {e}"
-                )
-
-        # Combine native text + OCR text
-        if ocr_texts:
-
-            text += "\n\n" + "\n\n".join(
-                ocr_texts
+        except Exception as error:
+            print(
+                f"Unable to inspect embedded images on page {page_number} "
+                f"of {file_path.name}: {error}"
             )
+
+        page_content = "\n\n".join(text_parts).strip()
+        if not page_content:
+            continue
+
+        metadata = _base_metadata(file_path)
+        metadata["page"] = page_number
 
         pdf_documents.append(
             {
-                "content": text,
-
-                "metadata": {
-                    "file_name": file_path.name,
-                    "file_type": file_path.suffix,
-                    "page": page_number,
-                    "source": str(file_path)
-                }
+                "content": page_content,
+                "metadata": metadata,
             }
         )
 
     return pdf_documents
 
 
-def load_docx(file_path):
-    """
-    Load DOCX native text and OCR embedded images.
-    """
-
+def load_docx(file_path: Path) -> list:
+    """Extract DOCX text and OCR images stored in the DOCX package."""
     loader = Docx2txtLoader(str(file_path))
-
     documents = loader.load()
 
-    content = documents[0].page_content.strip()
+    content_parts = []
+    if documents and documents[0].page_content:
+        native_text = documents[0].page_content.strip()
+        if native_text:
+            content_parts.append(native_text)
 
-    # DOCX files are ZIP containers
+    # DOCX files are ZIP containers; embedded images are under word/media/.
     with ZipFile(file_path, "r") as zip_file:
-
         image_files = [
             name
             for name in zip_file.namelist()
-            if name.startswith("word/media/")
+            if name.startswith("word/media/") and not name.endswith("/")
         ]
 
         for image_file in image_files:
-
             try:
-
-                image_data = zip_file.read(
-                    image_file
-                )
-
-                image = Image.open(
-                    BytesIO(image_data)
-                )
-
-                # OCR embedded image
-                ocr_text = perform_ocr(image)
-
-                if ocr_text:
-                    content += (
-                        "\n\n" + ocr_text
-                    )
-
-            except Exception as e:
-
+                image_text = _ocr_image_bytes(zip_file.read(image_file)).strip()
+                if image_text:
+                    content_parts.append(image_text)
+            except (UnidentifiedImageError, OSError, Exception) as error:
                 print(
-                    f"OCR failed for image "
-                    f"{image_file}: {e}"
+                    f"OCR failed for embedded image {image_file} "
+                    f"in {file_path.name}: {error}"
                 )
+
+    content = "\n\n".join(content_parts).strip()
+    if not content:
+        return []
 
     return [
         {
             "content": content,
-
-            "metadata": {
-                "file_name": file_path.name,
-                "file_type": file_path.suffix,
-                "source": str(file_path)
-            }
+            "metadata": _base_metadata(file_path),
         }
     ]
 
 
-def load_pptx(file_path):
-    """
-    Load PowerPoint slide text and OCR images.
-    """
+def _extract_shape_text_and_images(shape, slide_content: list, slide_number: int, file_path: Path):
+    """Extract text and OCR images from a PowerPoint shape, including groups."""
+    if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+        for child_shape in shape.shapes:
+            _extract_shape_text_and_images(
+                child_shape, slide_content, slide_number, file_path
+            )
+        return
 
-    presentation = Presentation(file_path)
+    if getattr(shape, "has_text_frame", False):
+        text = (shape.text or "").strip()
+        if text:
+            slide_content.append(text)
 
+    if getattr(shape, "has_table", False):
+        for row in shape.table.rows:
+            cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+            if cells:
+                slide_content.append(" | ".join(cells))
+
+    if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
+        try:
+            image_text = _ocr_image_bytes(shape.image.blob).strip()
+            if image_text:
+                slide_content.append(image_text)
+        except Exception as error:
+            print(
+                f"OCR failed for image on slide {slide_number} "
+                f"of {file_path.name}: {error}"
+            )
+
+
+def load_pptx(file_path: Path) -> list:
+    """Extract text, tables and OCR-readable images from each slide."""
+    presentation = Presentation(str(file_path))
     ppt_documents = []
 
-    for slide_number, slide in enumerate(
-        presentation.slides,
-        start=1
-    ):
-
+    for slide_number, slide in enumerate(presentation.slides, start=1):
         slide_content = []
 
         for shape in slide.shapes:
+            _extract_shape_text_and_images(
+                shape, slide_content, slide_number, file_path
+            )
 
-            # Normal slide text
-            if hasattr(shape, "text"):
+        content = "\n\n".join(slide_content).strip()
+        if not content:
+            continue
 
-                text = shape.text.strip()
-
-                if text:
-                    slide_content.append(
-                        text
-                    )
-
-            # Embedded image
-            if shape.shape_type == 13:
-
-                try:
-
-                    image = Image.open(
-                        BytesIO(
-                            shape.image.blob
-                        )
-                    )
-
-                    # OCR image
-                    ocr_text = perform_ocr(
-                        image
-                    )
-
-                    if ocr_text:
-                        slide_content.append(
-                            ocr_text
-                        )
-
-                except Exception as e:
-
-                    print(
-                        f"OCR failed for image "
-                        f"on slide {slide_number}: {e}"
-                    )
+        metadata = _base_metadata(file_path)
+        metadata["slide"] = slide_number
 
         ppt_documents.append(
             {
-                "content": "\n\n".join(
-                    slide_content
-                ),
-
-                "metadata": {
-                    "file_name": file_path.name,
-                    "file_type": file_path.suffix,
-                    "slide": slide_number,
-                    "source": str(file_path)
-                }
+                "content": content,
+                "metadata": metadata,
             }
         )
 
     return ppt_documents
 
 
-def load_image(file_path):
-    """
-    Load an image and extract text using OCR.
-    """
+def load_image(file_path: Path) -> list:
+    """Extract text from a standalone image using OCR."""
+    try:
+        with Image.open(file_path) as image:
+            text = (perform_ocr(image) or "").strip()
+    except Exception as error:
+        raise ValueError(
+            f"Unable to open or OCR image {file_path.name}: {error}"
+        ) from error
 
-    image = Image.open(file_path)
-
-    text = perform_ocr(image)
+    if not text:
+        return []
 
     return [
         {
             "content": text,
-
-            "metadata": {
-                "file_name": file_path.name,
-                "file_type": file_path.suffix,
-                "source": str(file_path)
-            }
+            "metadata": _base_metadata(file_path),
         }
     ]
 
 
-def load_documents():
-    """
-    Scan the documents folder and load all supported files.
-    """
+def load_document(file_path: Path) -> list:
+    """Load one supported document using the matching loader."""
+    file_path = Path(file_path)
+    extension = file_path.suffix.lower()
+
+    if extension == ".pdf":
+        return load_pdf(file_path)
+    if extension == ".docx":
+        return load_docx(file_path)
+    if extension == ".pptx":
+        return load_pptx(file_path)
+    if extension == ".txt":
+        return load_txt(file_path)
+    if extension in {".png", ".jpg", ".jpeg"}:
+        return load_image(file_path)
+
+    raise ValueError(f"Unsupported document type: {extension}")
+
+
+def load_documents() -> list:
+    """Recursively load every supported file under the TechNova folder."""
+    if not DOCUMENT_FOLDER.exists():
+        raise FileNotFoundError(
+            f"Document folder not found: {DOCUMENT_FOLDER}"
+        )
 
     all_documents = []
 
-    for file_path in DOCUMENT_FOLDER.iterdir():
-
+    for file_path in sorted(DOCUMENT_FOLDER.rglob("*")):
         if not file_path.is_file():
             continue
 
-        extension = file_path.suffix.lower()
+        if file_path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+            continue
 
-        if extension == ".pdf":
-
-            all_documents.extend(
-                load_pdf(file_path)
+        try:
+            loaded = load_document(file_path)
+            all_documents.extend(loaded)
+            print(
+                f"Loaded {file_path.name}: "
+                f"{len(loaded)} page/slide/document section(s)"
             )
-
-        elif extension == ".docx":
-
-            all_documents.extend(
-                load_docx(file_path)
-            )
-
-        elif extension == ".txt":
-
-            all_documents.extend(
-                load_txt(file_path)
-            )
-
-        elif extension == ".pptx":
-
-            all_documents.extend(
-                load_pptx(file_path)
-            )
-
-        elif extension in [
-            ".png",
-            ".jpg",
-            ".jpeg"
-        ]:
-
-            all_documents.extend(
-                load_image(file_path)
-            )
+        except Exception as error:
+            # Continue scanning other files, but make the failure visible.
+            print(f"Failed to load {file_path.name}: {error}")
 
     return all_documents

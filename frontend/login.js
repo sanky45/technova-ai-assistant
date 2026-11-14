@@ -16,7 +16,7 @@
 
 
     // =========================================================
-    // DOM ELEMENTS
+    // DOM
     // =========================================================
 
     const form =
@@ -62,7 +62,7 @@
 
 
     // =========================================================
-    // EXISTING SESSION CHECK
+    // EXISTING SESSION
     // =========================================================
 
     function hasExistingToken() {
@@ -79,11 +79,8 @@
 
 
     /*
-     * If the user already has a valid-looking
-     * session token, send them directly to chat.
-     *
-     * The backend will still validate the token
-     * whenever an authenticated API request is made.
+     * If the user is already authenticated,
+     * don't make them sign in again.
      */
 
     if (hasExistingToken()) {
@@ -133,12 +130,6 @@
 
         loginSuccess.hidden =
             true;
-
-        loginError.textContent =
-            "";
-
-        loginSuccess.textContent =
-            "";
     }
 
 
@@ -150,18 +141,15 @@
         passwordError.textContent =
             "";
 
-
         document
             .querySelectorAll(
                 ".input-wrap.invalid"
             )
             .forEach(
                 element => {
-
                     element.classList.remove(
                         "invalid"
                     );
-
                 }
             );
     }
@@ -192,16 +180,13 @@
     }
 
 
-    // =========================================================
-    // LOADING STATE
-    // =========================================================
-
     function setLoading(
         loading
     ) {
 
         loginBtn.disabled =
             loading;
+
 
         emailInput.disabled =
             loading;
@@ -245,53 +230,43 @@
         "click",
         () => {
 
-            const isPassword =
+            const showing =
                 passwordInput.type ===
-                "password";
+                "text";
 
 
-            if (isPassword) {
+            passwordInput.type =
+                showing
+                    ? "password"
+                    : "text";
 
-                passwordInput.type =
-                    "text";
 
-                togglePassword.textContent =
-                    "Hide";
+            togglePassword.textContent =
+                showing
+                    ? "Show"
+                    : "Hide";
 
-                togglePassword.setAttribute(
-                    "aria-label",
-                    "Hide password"
-                );
 
-                togglePassword.setAttribute(
-                    "title",
-                    "Hide password"
-                );
+            togglePassword.setAttribute(
+                "aria-label",
+                showing
+                    ? "Show password"
+                    : "Hide password"
+            );
 
-            } else {
 
-                passwordInput.type =
-                    "password";
-
-                togglePassword.textContent =
-                    "Show";
-
-                togglePassword.setAttribute(
-                    "aria-label",
-                    "Show password"
-                );
-
-                togglePassword.setAttribute(
-                    "title",
-                    "Show password"
-                );
-            }
+            togglePassword.setAttribute(
+                "title",
+                showing
+                    ? "Show password"
+                    : "Hide password"
+            );
         }
     );
 
 
     // =========================================================
-    // EMAIL VALIDATION
+    // VALIDATION
     // =========================================================
 
     function isValidEmail(
@@ -303,10 +278,6 @@
     }
 
 
-    // =========================================================
-    // FORM VALIDATION
-    // =========================================================
-
     function validateForm() {
 
         clearFieldErrors();
@@ -315,15 +286,13 @@
         const email =
             emailInput.value.trim();
 
+
         const password =
             passwordInput.value;
 
 
-        let valid =
-            true;
+        let valid = true;
 
-
-        // Email
 
         if (!email) {
 
@@ -333,8 +302,7 @@
                 "Email address is required."
             );
 
-            valid =
-                false;
+            valid = false;
 
         } else if (
             !isValidEmail(email)
@@ -346,12 +314,9 @@
                 "Enter a valid email address."
             );
 
-            valid =
-                false;
+            valid = false;
         }
 
-
-        // Password
 
         if (!password) {
 
@@ -361,8 +326,7 @@
                 "Password is required."
             );
 
-            valid =
-                false;
+            valid = false;
         }
 
 
@@ -371,7 +335,7 @@
 
 
     // =========================================================
-    // LOGIN REQUEST
+    // LOGIN
     // =========================================================
 
     form.addEventListener(
@@ -384,9 +348,9 @@
             clearAlerts();
 
 
-            // Validate before calling backend
-
-            if (!validateForm()) {
+            if (
+                !validateForm()
+            ) {
 
                 return;
             }
@@ -395,20 +359,15 @@
             const email =
                 emailInput.value.trim();
 
+
             const password =
                 passwordInput.value;
 
 
-            setLoading(
-                true
-            );
+            setLoading(true);
 
 
             try {
-
-                // ---------------------------------------------
-                // Call FastAPI login endpoint
-                // ---------------------------------------------
 
                 const response =
                     await fetch(
@@ -426,23 +385,15 @@
 
                             body:
                                 JSON.stringify({
-                                    email:
-                                        email,
-
-                                    password:
-                                        password
+                                    email,
+                                    password
                                 })
                         }
                     );
 
 
-                let data =
-                    {};
+                let data = {};
 
-
-                // ---------------------------------------------
-                // Parse response
-                // ---------------------------------------------
 
                 try {
 
@@ -457,10 +408,6 @@
                 }
 
 
-                // ---------------------------------------------
-                // Backend returned an error
-                // ---------------------------------------------
-
                 if (!response.ok) {
 
                     throw new Error(
@@ -470,10 +417,6 @@
                     );
                 }
 
-
-                // ---------------------------------------------
-                // Validate JWT response
-                // ---------------------------------------------
 
                 if (
                     !data.access_token
@@ -485,26 +428,15 @@
                 }
 
 
-                // =================================================
-                // STORE JWT
-                // =================================================
-
                 /*
-                 * Remember me checked:
+                 * Remember me controls where the JWT lives.
                  *
+                 * Checked:
                  *     localStorage
                  *
-                 * The token survives browser restarts.
-                 *
-                 *
-                 * Remember me unchecked:
-                 *
+                 * Unchecked:
                  *     sessionStorage
-                 *
-                 * The token is removed when the browser
-                 * session ends.
                  */
-
 
                 if (
                     rememberMe.checked
@@ -520,15 +452,8 @@
                         "true"
                     );
 
-
-                    // Remove any old session token
-
                     sessionStorage.removeItem(
                         ACCESS_TOKEN_KEY
-                    );
-
-                    sessionStorage.removeItem(
-                        REMEMBER_ME_KEY
                     );
 
                 } else {
@@ -543,9 +468,6 @@
                         "false"
                     );
 
-
-                    // Remove any old persistent token
-
                     localStorage.removeItem(
                         ACCESS_TOKEN_KEY
                     );
@@ -556,16 +478,10 @@
                 }
 
 
-                // =================================================
-                // SUCCESS
-                // =================================================
-
                 showSuccess(
                     "Signed in successfully. Redirecting..."
                 );
 
-
-                // Small delay so the user sees success state
 
                 setTimeout(
                     () => {
@@ -595,16 +511,14 @@
 
             } finally {
 
-                setLoading(
-                    false
-                );
+                setLoading(false);
             }
         }
     );
 
 
     // =========================================================
-    // LIVE EMAIL VALIDATION
+    // LIVE FIELD CLEANUP
     // =========================================================
 
     emailInput.addEventListener(
@@ -614,12 +528,10 @@
             emailError.textContent =
                 "";
 
-
             const wrapper =
                 emailInput.closest(
                     ".input-wrap"
                 );
-
 
             if (wrapper) {
 
@@ -628,15 +540,10 @@
                 );
             }
 
-
             clearAlerts();
         }
     );
 
-
-    // =========================================================
-    // LIVE PASSWORD VALIDATION
-    // =========================================================
 
     passwordInput.addEventListener(
         "input",
@@ -645,12 +552,10 @@
             passwordError.textContent =
                 "";
 
-
             const wrapper =
                 passwordInput.closest(
                     ".input-wrap"
                 );
-
 
             if (wrapper) {
 
@@ -658,7 +563,6 @@
                     "invalid"
                 );
             }
-
 
             clearAlerts();
         }
@@ -670,18 +574,10 @@
     // =========================================================
 
     /*
-     * We don't currently have a password-reset
-     * backend endpoint.
+     * There is currently no forgot-password backend endpoint
+     * in the implemented API.
      *
-     * Therefore we don't pretend that this feature
-     * is functional yet.
-     *
-     * Later we can build:
-     *
-     *     POST /forgot-password
-     *     POST /reset-password
-     *
-     * with email verification/token flow.
+     * Keep the UI honest instead of pretending this works.
      */
 
     forgotPasswordBtn.addEventListener(
@@ -696,15 +592,12 @@
 
 
     // =========================================================
-    // INITIAL PAGE STATE
+    // INITIAL STATE
     // =========================================================
 
     clearAlerts();
 
     clearFieldErrors();
-
-
-    // Put cursor in email field
 
     emailInput.focus();
 

@@ -11,6 +11,12 @@
     const CONVERSATIONS_ENDPOINT =
         "/api/conversations";
 
+    const DOCUMENT_UPLOAD_ENDPOINT =
+        "/api/documents/upload";
+
+    const DOCUMENTS_ENDPOINT =
+        "/api/documents";
+
     const ACTIVE_CONVERSATION_KEY =
         "kstore_ai_active_conversation";
 
@@ -54,6 +60,15 @@
 
     const logoutBtn =
         document.getElementById("logoutBtn");
+
+    const documentFileInput =
+        document.getElementById("documentFileInput");
+
+    const uploadDocumentBtn =
+        document.getElementById("addDocumentBtn");
+
+    const uploadStatus =
+        document.getElementById("documentUploadStatus");
 
 
     // =========================================================
@@ -200,7 +215,7 @@
         };
 
 
-        if (options.body) {
+        if (options.body && !(options.body instanceof FormData)) {
 
             headers["Content-Type"] =
                 "application/json";
@@ -1331,26 +1346,29 @@
         sources = []
     ) {
 
-        let sourcesHtml =
-            "";
+        let sourcesHtml = "";
 
-
-        if (
-            sources.length > 0
-        ) {
-
+        if (sources.length > 0) {
+            const previewSources = sources.slice(0, 2);
+            const remainingSources = sources.slice(2);
             sourcesHtml = `
-                <div class="sources-block">
-
-                    <div class="sources-title">
-                        Sources
+                <details class="sources-block">
+                    <summary class="sources-summary">
+                        <span class="sources-summary-label">Sources</span>
+                        <span class="sources-count">${sources.length}</span>
+                        <span class="sources-summary-hint">View references</span>
+                        <span class="sources-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div class="sources-content">
+                        ${previewSources.map(renderSource).join("")}
+                        ${remainingSources.length ? `
+                            <details class="more-sources">
+                                <summary>Show ${remainingSources.length} more ${remainingSources.length === 1 ? "source" : "sources"}</summary>
+                                ${remainingSources.map(renderSource).join("")}
+                            </details>
+                        ` : ""}
                     </div>
-
-                    ${sources
-                        .map(renderSource)
-                        .join("")}
-
-                </div>
+                </details>
             `;
         }
 
@@ -2138,6 +2156,82 @@
 
 
     // =========================================================
+    // DOCUMENT UPLOAD
+    // =========================================================
+
+    function showUploadStatus(message, type = "info") {
+
+        if (!uploadStatus) return;
+
+        uploadStatus.hidden = false;
+        uploadStatus.textContent = message;
+        uploadStatus.className = `upload-status ${type}`;
+    }
+
+    async function uploadDocument(file) {
+
+        if (!file) return;
+
+        if (!requireAuthentication()) return;
+
+        const allowedExtensions = [".pdf", ".docx", ".pptx", ".txt", ".png", ".jpg", ".jpeg"];
+        const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+
+        if (!allowedExtensions.includes(extension)) {
+            showUploadStatus("Unsupported file type. Choose PDF, DOCX, PPTX, TXT, PNG or JPG.", "error");
+            return;
+        }
+
+        if (file.size > 20 * 1024 * 1024) {
+            showUploadStatus("File is too large. Maximum size is 20 MB.", "error");
+            return;
+        }
+
+        if (uploadDocumentBtn) uploadDocumentBtn.disabled = true;
+        showUploadStatus(`Uploading ${file.name}…`, "info");
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const response = await apiFetch(DOCUMENT_UPLOAD_ENDPOINT, {
+                method: "POST",
+                body: formData
+            });
+
+            if (!response) return;
+
+            const data = await parseApiResponse(response);
+
+            if (data.duplicate) {
+                showUploadStatus(`${file.name} is already in the knowledge base (${data.status}).`, "success");
+            } else {
+                showUploadStatus(`${file.name} uploaded. Processing has started; it will become searchable when ingestion completes.`, "success");
+            }
+
+            await loadUploadedDocuments();
+
+        } catch (error) {
+            console.error("Document upload failed:", error);
+            showUploadStatus(error.message || "Document upload failed.", "error");
+        } finally {
+            if (uploadDocumentBtn) uploadDocumentBtn.disabled = false;
+            if (documentFileInput) documentFileInput.value = "";
+        }
+    }
+
+    async function loadUploadedDocuments() {
+        try {
+            const response = await apiFetch(DOCUMENTS_ENDPOINT);
+            if (!response) return;
+            const data = await parseApiResponse(response);
+            console.info("Knowledge base documents:", data.documents || []);
+        } catch (error) {
+            console.warn("Unable to refresh document list:", error);
+        }
+    }
+
+    // =========================================================
     // EVENT LISTENERS
     // =========================================================
 
@@ -2153,6 +2247,23 @@
             "click",
             newChat
         );
+    }
+
+
+    if (uploadDocumentBtn && documentFileInput) {
+
+        uploadDocumentBtn.addEventListener("click", () => {
+            documentFileInput.click();
+        });
+
+        documentFileInput.addEventListener("change", async () => {
+            const files = Array.from(documentFileInput.files || []);
+            if (!files.length) return;
+            for (const file of files) {
+                await uploadDocument(file);
+            }
+            documentFileInput.value = "";
+        });
     }
 
 

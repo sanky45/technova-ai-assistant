@@ -1,38 +1,34 @@
-from google import genai
+
+import requests
 
 from config import (
-    GEMINI_API_KEY,
-    GEMINI_MODEL_NAME
+    OPENROUTER_API_KEY,
+    OPENROUTER_BASE_URL,
+    OPENROUTER_LLM_MODEL
 )
 
 
 # ==================================================
-# GEMINI CONFIGURATION
+# OPENROUTER CONFIGURATION
 # ==================================================
 
 DEFAULT_MAX_OUTPUT_TOKENS = 500
 DEFAULT_TEMPERATURE = 0.2
+
+CHAT_COMPLETIONS_URL = (
+    f"{OPENROUTER_BASE_URL}/chat/completions"
+)
 
 
 # ==================================================
 # VALIDATE API KEY
 # ==================================================
 
-if not GEMINI_API_KEY:
-
+if not OPENROUTER_API_KEY:
     raise ValueError(
-        "GEMINI_API_KEY is not configured. "
+        "OPENROUTER_API_KEY is not configured. "
         "Add it to your .env file."
     )
-
-
-# ==================================================
-# GEMINI CLIENT
-# ==================================================
-
-client = genai.Client(
-    api_key=GEMINI_API_KEY
-)
 
 
 # ==================================================
@@ -44,7 +40,7 @@ def generate_answer(
     max_output_tokens=DEFAULT_MAX_OUTPUT_TOKENS
 ):
     """
-    Generate an answer using Gemini.
+    Generate an answer using OpenRouter.
 
     Parameters
     ----------
@@ -60,97 +56,71 @@ def generate_answer(
         Generated answer.
     """
 
-    # --------------------------------------------------
     # Validate prompt
-    # --------------------------------------------------
-
     if not prompt or not prompt.strip():
+        raise ValueError("Prompt cannot be empty.")
 
-        raise ValueError(
-            "Prompt cannot be empty."
-        )
-
-    # --------------------------------------------------
-    # Validate output token limit
-    # --------------------------------------------------
-
+    # Validate token limit
     if max_output_tokens <= 0:
-
         raise ValueError(
-            "max_output_tokens must be "
-            "greater than zero."
+            "max_output_tokens must be greater than zero."
         )
 
-    # --------------------------------------------------
-    # Generate response
-    # --------------------------------------------------
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
 
-    try:
-
-        response = client.models.generate_content(
-
-            model=GEMINI_MODEL_NAME,
-
-            contents=prompt,
-
-            config={
-                "max_output_tokens":
-                    max_output_tokens,
-
-                "temperature":
-                    DEFAULT_TEMPERATURE
+    payload = {
+        "model": OPENROUTER_LLM_MODEL,
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt.strip()
             }
+        ],
+        "max_tokens": max_output_tokens,
+        "temperature": DEFAULT_TEMPERATURE
+    }
+
+    # Generate response
+    try:
+        response = requests.post(
+            CHAT_COMPLETIONS_URL,
+            headers=headers,
+            json=payload,
+            timeout=120
         )
 
-    except Exception as error:
+        response.raise_for_status()
 
-        print(
-            "Gemini generation failed:"
-        )
+        result = response.json()
 
-        print(
-            f"  → Error: {error}"
-        )
+    except requests.exceptions.RequestException as error:
+        print(f"OpenRouter generation failed: {error}")
 
         raise RuntimeError(
-            "Unable to generate an answer "
-            "using the LLM."
+            "Unable to generate an answer using OpenRouter."
         ) from error
 
-    # --------------------------------------------------
-    # Extract generated text
-    # --------------------------------------------------
-
-    if response is None:
-
+    except ValueError as error:
         raise RuntimeError(
-            "LLM returned an empty response."
+            "OpenRouter returned an invalid JSON response."
+        ) from error
+
+    # Extract generated text
+    try:
+        generated_text = result["choices"][0]["message"]["content"]
+
+    except (KeyError, IndexError, TypeError):
+        raise RuntimeError(
+            "OpenRouter returned an unexpected response format."
         )
 
-    generated_text = getattr(
-        response,
-        "text",
-        None
-    )
-
-    # --------------------------------------------------
     # Validate generated text
-    # --------------------------------------------------
+    if isinstance(generated_text, str) and generated_text.strip():
+        return generated_text.strip()
 
-    if generated_text:
-
-        generated_text = (
-            generated_text.strip()
-        )
-
-        if generated_text:
-
-            return generated_text
-
-    # --------------------------------------------------
-    # Fallback
-    # --------------------------------------------------
-
-    return (
-        "I was unable to generate an answer."
+    raise RuntimeError(
+        "OpenRouter returned an empty response."
     )

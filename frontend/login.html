@@ -1,69 +1,66 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sign in to TechNova AI Document Intelligence">
+    <meta name="theme-color" content="#090a0f">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <title>Sign in — TechNova AI</title>
 
-    <meta
-        name="description"
-        content="Sign in to KStore AI Document Intelligence"
-    >
+    <link rel="stylesheet" href="login.css">
 
-    <meta
-        name="theme-color"
-        content="#090a0f"
-    >
+    <!-- Dark theme autofill correction -->
+    <style>
+        .auth-card .input-wrap input,
+        .auth-card .input-wrap input:focus {
+            background: transparent !important;
+            color: #f5f7fb !important;
+            -webkit-text-fill-color: #f5f7fb !important;
+            caret-color: #f5f7fb !important;
+            outline: none;
+            box-shadow: none;
+        }
 
-    <title>Sign in — KStore AI</title>
-
-    <link
-        rel="stylesheet"
-        href="login.css"
-    >
+        .auth-card .input-wrap input:-webkit-autofill,
+        .auth-card .input-wrap input:-webkit-autofill:hover,
+        .auth-card .input-wrap input:-webkit-autofill:focus,
+        .auth-card .input-wrap input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px #0c0d14 inset !important;
+            box-shadow: 0 0 0 1000px #0c0d14 inset !important;
+            -webkit-text-fill-color: #f5f7fb !important;
+            caret-color: #f5f7fb !important;
+            transition: background-color 99999s ease-in-out 0s;
+        }
+    </style>
 </head>
-
 
 <body class="auth-page">
 
     <main class="auth-shell">
 
-        <!-- Decorative background -->
         <div class="auth-glow auth-glow-one"></div>
         <div class="auth-glow auth-glow-two"></div>
 
-
         <section class="auth-layout">
 
-
-            <!-- =================================================
-                 BRAND / PRODUCT PANEL
-            ================================================== -->
-
+            <!-- BRAND PANEL -->
             <aside class="auth-brand-panel">
 
                 <div class="brand-lockup">
-
-                    <div class="brand-mark" aria-hidden="true">
-                        K
-                    </div>
+                    <div class="brand-mark" aria-hidden="true">K</div>
 
                     <div>
                         <div class="brand-name">
-                            KStore <strong>AI</strong>
+                            TechNova <strong>AI</strong>
                         </div>
-
                         <div class="brand-subtitle">
                             Document Intelligence
                         </div>
                     </div>
-
                 </div>
-
 
                 <div class="brand-content">
 
@@ -83,82 +80,54 @@
                         knowledge base.
                     </p>
 
-
                     <div class="feature-list">
 
                         <div class="feature-item">
-
-                            <span class="feature-icon" aria-hidden="true">
-                                ✓
-                            </span>
-
+                            <span class="feature-icon" aria-hidden="true">✓</span>
                             <div>
                                 <strong>Grounded answers</strong>
                                 <span>Responses based on your documents</span>
                             </div>
-
                         </div>
 
-
                         <div class="feature-item">
-
-                            <span class="feature-icon" aria-hidden="true">
-                                ◈
-                            </span>
-
+                            <span class="feature-icon" aria-hidden="true">◈</span>
                             <div>
                                 <strong>Source-aware</strong>
                                 <span>See the documents behind each answer</span>
                             </div>
-
                         </div>
 
-
                         <div class="feature-item">
-
-                            <span class="feature-icon" aria-hidden="true">
-                                ◌
-                            </span>
-
+                            <span class="feature-icon" aria-hidden="true">◌</span>
                             <div>
                                 <strong>Secure access</strong>
                                 <span>Protected with authenticated access</span>
                             </div>
-
                         </div>
 
                     </div>
-
                 </div>
 
-
                 <div class="brand-footer">
-                    KStore AI · Enterprise Document Intelligence
+                    TechNova AI · Enterprise Document Intelligence
                 </div>
 
             </aside>
 
-
-            <!-- =================================================
-                 LOGIN PANEL
-            ================================================== -->
-
+            <!-- LOGIN PANEL -->
             <section class="auth-card-wrap">
 
                 <div class="auth-card">
 
-
                     <div class="mobile-brand">
 
-                        <div class="brand-mark" aria-hidden="true">
-                            K
-                        </div>
+                        <div class="brand-mark" aria-hidden="true">K</div>
 
                         <div>
                             <div class="brand-name">
-                                KStore <strong>AI</strong>
+                                TechNova <strong>AI</strong>
                             </div>
-
                             <div class="brand-subtitle">
                                 Document Intelligence
                             </div>
@@ -166,16 +135,13 @@
 
                     </div>
 
-
                     <div class="auth-heading">
 
                         <div class="eyebrow">
                             Welcome back
                         </div>
 
-                        <h2>
-                            Sign in to KStore AI
-                        </h2>
+                        <h2>Sign in to TechNova AI</h2>
 
                         <p>
                             Enter your credentials to continue
@@ -184,8 +150,7 @@
 
                     </div>
 
-
-                    <!-- Server / client error -->
+                    <!-- LOGIN ERROR -->
                     <div
                         id="loginError"
                         class="form-alert form-alert-error"
@@ -194,8 +159,7 @@
                         hidden
                     ></div>
 
-
-                    <!-- Success -->
+                    <!-- LOGIN SUCCESS -->
                     <div
                         id="loginSuccess"
                         class="form-alert form-alert-success"
@@ -204,30 +168,22 @@
                         hidden
                     ></div>
 
-
                     <form
                         id="loginForm"
                         class="auth-form"
                         novalidate
                     >
 
-
-                        <!-- Email -->
-
+                        <!-- EMAIL -->
                         <div class="field-group">
 
-                            <label
-                                for="email"
-                            >
+                            <label for="email">
                                 Email address
                             </label>
 
                             <div class="input-wrap">
 
-                                <span
-                                    class="input-icon"
-                                    aria-hidden="true"
-                                >
+                                <span class="input-icon" aria-hidden="true">
                                     @
                                 </span>
 
@@ -252,16 +208,12 @@
 
                         </div>
 
-
-                        <!-- Password -->
-
+                        <!-- PASSWORD -->
                         <div class="field-group">
 
                             <div class="field-label-row">
 
-                                <label
-                                    for="password"
-                                >
+                                <label for="password">
                                     Password
                                 </label>
 
@@ -275,13 +227,9 @@
 
                             </div>
 
-
                             <div class="input-wrap">
 
-                                <span
-                                    class="input-icon"
-                                    aria-hidden="true"
-                                >
+                                <span class="input-icon" aria-hidden="true">
                                     •
                                 </span>
 
@@ -315,9 +263,7 @@
 
                         </div>
 
-
-                        <!-- Options -->
-
+                        <!-- REMEMBER ME -->
                         <div class="form-options">
 
                             <label class="checkbox-label">
@@ -332,26 +278,20 @@
                                     <span>✓</span>
                                 </span>
 
-                                <span>
-                                    Remember me
-                                </span>
+                                <span>Remember me</span>
 
                             </label>
 
                         </div>
 
-
-                        <!-- Submit -->
-
+                        <!-- SIGN IN BUTTON -->
                         <button
                             id="loginBtn"
                             class="primary-button"
                             type="submit"
                         >
 
-                            <span
-                                id="loginBtnText"
-                            >
+                            <span id="loginBtnText">
                                 Sign in
                             </span>
 
@@ -362,30 +302,22 @@
                                 hidden
                             ></span>
 
-                            <span
-                                class="button-arrow"
-                                aria-hidden="true"
-                            >
+                            <span class="button-arrow" aria-hidden="true">
                                 →
                             </span>
 
                         </button>
 
-
                     </form>
 
-
+                    <!-- SECURITY INFORMATION -->
                     <div class="auth-divider">
                         <span>Protected workspace</span>
                     </div>
 
-
                     <div class="security-note">
 
-                        <span
-                            class="security-icon"
-                            aria-hidden="true"
-                        >
+                        <span class="security-icon" aria-hidden="true">
                             ◈
                         </span>
 
@@ -396,12 +328,10 @@
 
                     </div>
 
-
+                    <!-- REGISTER LINK -->
                     <div class="auth-bottom">
 
-                        <span>
-                            Don't have an account?
-                        </span>
+                        <span>Don't have an account?</span>
 
                         <a href="/register.html">
                             Create an account
@@ -417,9 +347,7 @@
 
     </main>
 
-
     <script src="login.js"></script>
 
 </body>
-
 </html>

@@ -1,11 +1,22 @@
 from fastapi import (
     FastAPI,
     Depends,
-    HTTPException
+    HTTPException,
+    BackgroundTasks,
+    UploadFile,
+    File
 )
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+from pathlib import Path
+import hashlib
+import uuid
+import re
+
+from database import SessionLocal
+from models import User, Document
 
 from pydantic import BaseModel, Field
 
@@ -30,7 +41,6 @@ from memory import (
 
 from jwt_handler import get_current_user
 
-from models import User
 
 
 # ==================================================
@@ -550,6 +560,143 @@ def ask_question(
 
         "sources": sources
     }
+
+
+# ==================================================
+# DOCUMENT UPLOAD AND KNOWLEDGE BASE
+# ==================================================
+
+DOCUMENT_FOLDER = (
+    Path(__file__).resolve().parent.parent
+    / "documents"
+    / "TechNova"
+    / "Uploaded"
+)
+
+ALLOWED_DOCUMENT_EXTENSIONS = {
+    ".pdf", ".docx", ".pptx", ".txt", ".png", ".jpg", ".jpeg"
+}
+MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20 MB
+
+
+def calculate_upload_hash(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
+
+
+def process_uploaded_document(file_path: Path, file_hash: str):
+    """Run the existing ingestion pipeline in a background task."""
+    db = SessionLocal()
+    try:
+        from document_ingestion import get_document_record, process_document
+
+        existing = get_document_record(db, file_path)
+        process_document(db, file_path, existing, file_hash)
+        logger.info("Document ingestion completed | file=%s", file_path.name)
+    except Exception:
+        db.rollback()
+        logger.exception("Document ingestion failed | file=%s", file_path.name)
+    finally:
+        db.close()
+
+
+@app.post("/api/documents/upload")
+async def upload_document(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Authenticated upload; indexing runs asynchronously."""
+    original_name = Path(file.filename or "").name
+    extension = Path(original_name).suffix.lower()
+
+    if not original_name or extension not in ALLOWED_DOCUMENT_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file type. Upload PDF, DOCX, PPTX, TXT, PNG or JPG."
+        )
+
+    content = await file.read(MAX_UPLOAD_SIZE + 1)
+    if not content:
+        raise HTTPException(status_code=400, detail="The uploaded file is empty.")
+    if len(content) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail="Maximum upload size is 20 MB.")
+
+    file_hash = calculate_upload_hash(content)
+    db = SessionLocal()
+    try:
+        duplicate = (
+            db.query(Document)
+            .filter(Document.file_hash == file_hash)
+            .first()
+        )
+        if duplicate and duplicate.status == "processed":
+            return {
+                "message": "This document is already in the knowledge base.",
+                "duplicate": True,
+                "document_id": duplicate.id,
+                "file_name": duplicate.file_name,
+                "status": duplicate.status
+            }
+    finally:
+        db.close()
+
+    # Isolate each upload in its own directory while preserving the original
+    # basename used by the document metadata and source citations.
+    safe_name = re.sub(r"[^A-Za-z0-9._ -]", "_", original_name).strip(" .")
+    if not safe_name:
+        safe_name = f"uploaded{extension}"
+    file_path = DOCUMENT_FOLDER / uuid.uuid4().hex / safe_name
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_bytes(content)
+
+    background_tasks.add_task(
+        process_uploaded_document,
+        file_path,
+        file_hash
+    )
+
+    logger.info(
+        "Document uploaded | user=%s | file=%s",
+        current_user.id,
+        safe_name
+    )
+
+    return {
+        "message": "Document uploaded. Ingestion has started.",
+        "duplicate": False,
+        "file_name": safe_name,
+        "status": "pending"
+    }
+
+
+@app.get("/api/documents")
+def list_documents(
+    current_user: User = Depends(get_current_user)
+):
+    """List documents and their ingestion status."""
+    db = SessionLocal()
+    try:
+        records = (
+            db.query(Document)
+            .order_by(Document.created_at.desc())
+            .all()
+        )
+        return {
+            "documents": [
+                {
+                    "id": item.id,
+                    "file_name": item.file_name,
+                    "file_type": item.file_type,
+                    "status": item.status,
+                    "chunk_count": item.chunk_count,
+                    "created_at": item.created_at.isoformat() if item.created_at else None,
+                    "updated_at": item.updated_at.isoformat() if item.updated_at else None
+                }
+                for item in records
+            ]
+        }
+    finally:
+        db.close()
 
 
 # ==================================================
